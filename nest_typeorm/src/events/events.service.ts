@@ -1,14 +1,16 @@
-import { Repository } from 'typeorm';
-import { Get, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Event } from './entities/event.entity';
+import {Repository} from 'typeorm';
+import {Get, Injectable} from '@nestjs/common';
+import {InjectRepository} from '@nestjs/typeorm';
+import {Event} from './entities/event.entity';
+import {Workshop} from "./entities/workshop.entity";
 
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(Event)
     private eventRepository: Repository<Event>,
-  ) {}
+  ) {
+  }
 
   getWarmupEvents() {
     return this.eventRepository.find();
@@ -93,7 +95,10 @@ export class EventsService {
 
   @Get('events')
   async getEventsWithWorkshops() {
-    throw new Error('TODO task 1');
+    return this.eventRepository
+      .createQueryBuilder('events')
+      .innerJoinAndMapMany('events.workshops', Workshop, 'workshop', 'events.id = workshop.eventId')
+      .getMany();
   }
 
   /* TODO: complete getFutureEventWithWorkshops so that it returns events with workshops, that have not yet started
@@ -164,6 +169,10 @@ export class EventsService {
      */
   @Get('futureevents')
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    return this.eventRepository
+      .createQueryBuilder('events')
+      .innerJoinAndMapMany('events.workshops', Workshop, 'workshop', 'events.id = workshop.eventId')
+      .where('workshop.start > :start_at', {start_at: new Date()})
+      .getMany();
   }
 }
